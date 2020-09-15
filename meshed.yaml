@@ -1,0 +1,265 @@
+# ---
+# apiVersion: appmesh.k8s.aws/v1beta2
+# kind: Mesh
+# metadata:
+#   name: uat-mesh
+# spec:
+#   namespaceSelector:
+#     matchLabels:
+#       mesh: uat-mesh
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualGateway
+metadata:
+  name: ingress-gw
+  namespace: mcd-apps
+spec:
+  namespaceSelector:
+    matchLabels:
+      gateway: ingress-gw
+  podSelector:
+    matchLabels:
+      app: ingress-gw
+  listeners:
+    - portMapping:
+        port: 8088
+        protocol: http
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: GatewayRoute
+metadata:
+  name: ordergateway-route-headers
+  namespace: mcd-apps
+spec:
+  httpRoute:
+    match:
+      prefix: "/path"
+    action:
+      target:
+        virtualService:
+          virtualServiceRef:
+            name: ordermgmt
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: GatewayRoute
+metadata:
+  name: inventorygateway-route-paths
+  namespace: mcd-apps
+spec:
+  httpRoute:
+    match:
+      prefix: "/inventory"
+    action:
+      target:
+        virtualService:
+          virtualServiceRef:
+            name: inventorymgmt
+---
+# apiVersion: appmesh.k8s.aws/v1beta2
+# kind: VirtualNode
+# metadata:
+#   name: ordermgmt
+#   namespace: mcd-apps
+# spec:
+#   podSelector:
+#     matchLabels:
+#       app: ordermgmt
+#       version: v1
+#   listeners:
+#     - portMapping:
+#         port: 8080
+#         protocol: http
+#       healthCheck:
+#         protocol: http
+#         path: '/mcd-order-management-restful-api/v1/health'
+#         healthyThreshold: 2
+#         unhealthyThreshold: 2
+#         timeoutMillis: 2000
+#         intervalMillis: 5000
+#   backends:
+#     - virtualService:
+#         virtualServiceRef:
+#           name: inventorymgmt
+#   serviceDiscovery:
+#     dns:
+#       hostname: ordermgmt.mcd-apps.svc.cluster.local
+# ---
+# apiVersion: appmesh.k8s.aws/v1beta2
+# kind: VirtualNode
+# metadata:
+#   name: ordermgmtv2
+#   namespace: mcd-apps
+# spec:
+#   podSelector:
+#     matchLabels:
+#       app: ordermgmt
+#       version: v2
+#   listeners:
+#     - portMapping:
+#         port: 8080
+#         protocol: http
+#       healthCheck:
+#         protocol: http
+#         path: '/mcd-order-management-restful-api/v1/health'
+#         healthyThreshold: 2
+#         unhealthyThreshold: 2
+#         timeoutMillis: 2000
+#         intervalMillis: 5000
+#   backends:
+#     - virtualService:
+#         virtualServiceRef:
+#           name: inventorymgmt
+#   serviceDiscovery:
+#     dns:
+#       hostname: ordermgmtv2.mcd-apps.svc.cluster.local
+# ---
+# apiVersion: appmesh.k8s.aws/v1beta2
+# kind: VirtualService
+# metadata:
+#   name: ordermgmt
+#   namespace: mcd-apps
+# spec:
+#   awsName: ordermgmt.mcd-apps.svc.cluster.local
+#   provider:
+#     virtualRouter:
+#       virtualRouterRef:
+#         name: ordermgmt-router
+# ---
+# # apiVersion: appmesh.k8s.aws/v1beta2
+# # kind: VirtualService
+# # metadata:
+# #   name: ordermgmtv2
+# #   namespace: mcd-apps
+# # spec:
+# #   awsName: ordermgmtv2.mcd-apps.svc.cluster.local
+# #   provider:
+# #     virtualRouter:
+# #       virtualRouterRef:
+# #         name: ordermgmt-router
+# ---
+# apiVersion: appmesh.k8s.aws/v1beta2
+# kind: VirtualService
+# metadata:
+#   name: inventorymgmt
+#   namespace: mcd-apps
+# spec:
+#   awsName: inventorymgmt.mcd-apps.svc.cluster.local
+#   provider:
+#     virtualRouter:
+#       virtualRouterRef:
+#         name: inventorymgmt-router
+# ---
+# apiVersion: appmesh.k8s.aws/v1beta2
+# kind: VirtualRouter
+# metadata:
+#   name: ordermgmt-router
+#   namespace: mcd-apps
+# spec:
+#   listeners:
+#     - portMapping:
+#         port: 8080
+#         protocol: http
+#   routes:
+#     - name: ordermgmt
+#       httpRoute:
+#         match:
+#           prefix: /
+#         action:
+#           weightedTargets:
+#             - virtualNodeRef:
+#                 name: ordermgmt
+#                 weight: 100
+#             # - virtualNodeRef:
+#             #     name: ordermgmtv2
+#             #   weight: 100
+# ---
+# apiVersion: appmesh.k8s.aws/v1beta2
+# kind: VirtualRouter
+# metadata:
+#   name: inventorymgmt-router
+#   namespace: mcd-apps
+# spec:
+#   listeners:
+#     - portMapping:
+#         port: 8081
+#         protocol: http
+#   routes:
+#     - name: inventorymgmt
+#       httpRoute:
+#         match:
+#           prefix: /
+#         action:
+#           weightedTargets:
+#             - virtualNodeRef:
+#                 name: inventorymgmt
+#               weight: 100
+# ---
+# apiVersion: appmesh.k8s.aws/v1beta2
+# kind: VirtualNode
+# metadata:
+#   name: inventorymgmt
+#   namespace: mcd-apps
+# spec:
+#   podSelector:
+#     matchLabels:
+#       app: inventorymgmt
+#       version: v1
+#   listeners:
+#     - portMapping:
+#         port: 8081
+#         protocol: http
+#       healthCheck:
+#         protocol: http
+#         path: '/mcd-inventory-management-restful-api/v1/health'
+#         healthyThreshold: 2
+#         unhealthyThreshold: 2
+#         timeoutMillis: 2000
+#         intervalMillis: 5000
+#   backends:
+#     - virtualService:
+#         virtualServiceRef:
+#           name: inventorymgmt
+#   serviceDiscovery:
+#     dns:
+#       hostname: inventorymgmt.mcd-apps.svc.cluster.local
+#   logging:
+#     access_log:
+#       file:
+#         path: /dev/stdout
+# ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-gw
+  namespace: mcd-apps
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8088
+      name: http
+  selector:
+    app: ingress-gw
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingress-gw
+  namespace: mcd-apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ingress-gw
+  template:
+    metadata:
+      labels:
+        app: ingress-gw
+    spec:
+      containers:
+        - name: envoy
+          image: 806612662659.dkr.ecr.us-east-2.amazonaws.com/aws-appmesh-envoy
+          ports:
+            - containerPort: 8088
