@@ -125,18 +125,6 @@ spec:
       virtualRouterRef:
         name: ordermgmt-router
 ---
-# apiVersion: appmesh.k8s.aws/v1beta2
-# kind: VirtualService
-# metadata:
-#   name: ordermgmtv2
-#   namespace: <Namespace_name>
-# spec:
-#   awsName: ordermgmtv2.<Namespace_name>.svc.cluster.local
-#   provider:
-#     virtualRouter:
-#       virtualRouterRef:
-#         name: ordermgmt-router
----
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualService
 metadata:
